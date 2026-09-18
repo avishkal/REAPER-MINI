@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REAPER-MD | Pair Code</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #030005;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            color: #fff;
+            position: relative;
+        }
+
+        /* Canvas for Lightning Effect */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Red Background Flash */
+        .flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 0, 0, 0.25);
+            z-index: 2;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.1s ease-out;
+        }
+
+        /* Main Glass Card */
+        .card {
+            position: relative;
+            z-index: 10;
+            background: rgba(15, 5, 10, 0.75);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 0, 0, 0.4);
+            padding: 40px 30px;
+            border-radius: 24px;
+            text-align: center;
+            width: 90%;
+            max-width: 380px;
+            box-shadow: 0 0 35px rgba(255, 0, 0, 0.3);
+        }
+
+        /* Avatar Container with Circle Animation */
+        .avatar-container {
+            position: relative;
+            width: 130px;
+            height: 130px;
+            margin: 0 auto 20px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .avatar-img {
+            width: 110px;
+            height: 110px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 0, 0, 0.9);
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+        }
+
+        .avatar-ring {
+            position: absolute;
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            border-top-color: #ff003c;
+            border-bottom-color: #ff0000;
+            animation: spin 1.5s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Progress Text */
+        .loader-text {
+            font-size: 20px;
+            font-weight: 800;
+            color: #ff003c;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(255, 0, 60, 0.8);
+        }
+
+        /* System Info */
+        .system-info {
+            display: none;
+            animation: fadeIn 0.8s ease-in-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff3333;
+            border: 1px solid #ff0000;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            margin-bottom: 15px;
+            box-shadow: 0 0 12px rgba(255, 0, 0, 0.5);
+        }
+
+        .bot-name {
+            font-size: 26px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(255, 0, 0, 0.8);
+        }
+
+        .bot-version {
+            font-size: 13px;
+            color: #b0a0a0;
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+        }
+
+        /* Pair Code Button */
+        .pair-btn {
+            display: inline-block;
+            width: 100%;
+            padding: 14px;
+            color: #fff;
+            font-weight: bold;
+            font-size: 16px;
+            text-decoration: none;
+            border-radius: 12px;
+            background: linear-gradient(90deg, #ff003c, #990000);
+            box-shadow: 0 0 25px rgba(255, 0, 60, 0.7);
+            transition: all 0.3s ease;
+            letter-spacing: 1.5px;
+        }
+
+        .pair-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 40px rgba(255, 0, 60, 1);
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="lightningCanvas"></canvas>
+    <div class="flash" id="flashBg"></div>
+
+    <div class="card">
+        <!-- Avatar Section -->
+        <div class="avatar-container">
+            <div class="avatar-ring" id="ring"></div>
+            <img src="https://files.catbox.moe/1p6v9b.jpg" alt="REAPER-MD" class="avatar-img">
+        </div>
+
+        <!-- Progress Text -->
+        <div id="loading-sec">
+            <div class="loader-text" id="progress-text">0%</div>
+        </div>
+
+        <!-- System Online & Details -->
+        <div class="system-info" id="system-sec">
+            <div class="status-badge">● SYSTEM ONLINE</div>
+            <div class="bot-name">REAPER-MD</div>
+            <div class="bot-version">VERSION 1.0</div>
+
+            <!-- Heroku Pair Site Link -->
+            <a href="https://reaper-md-445ba8c6230b.herokuapp.com/" target="_blank" class="pair-btn">
+                PAIR CODE
+            </a>
+        </div>
+    </div>
+
+    <script>
+        let isLoaded = false;
+
+        // 1. Loading Animation Logic
+        let count = 0;
+        const progressText = document.getElementById('progress-text');
+        const loadingSec = document.getElementById('loading-sec');
+        const systemSec = document.getElementById('system-sec');
+        const ring = document.getElementById('ring');
+
+        const interval = setInterval(() => {
+            count++;
+            progressText.innerText = count + '%';
+
+            if (count >= 100) {
+                clearInterval(interval);
+                loadingSec.style.display = 'none';
+                ring.style.animation = 'none';
+                ring.style.borderColor = 'rgba(255, 0, 0, 0.4)';
+                systemSec.style.display = 'block';
+
+                // 100% වූ පසු Lightning Animation සක්‍රිය වේ
+                isLoaded = true;
+                createLightning();
+            }
+        }, 30);
+
+        // 2. Red Lightning Canvas Logic
+        const canvas = document.getElementById('lightningCanvas');
+        const ctx = canvas.getContext('2d');
+        const flashBg = document.getElementById('flashBg');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function createLightning() {
+            if (!isLoaded) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (Math.random() < 0.2) {
+                let startX = Math.random() * canvas.width;
+                let startY = 0;
+                let segments = 10 + Math.random() * 15;
+
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+
+                let currentX = startX;
+                let currentY = startY;
+
+                for (let i = 0; i < segments; i++) {
+                    currentX += (Math.random() - 0.5) * 80;
+                    currentY += canvas.height / segments;
+                    ctx.lineTo(currentX, currentY);
+                }
+
+                ctx.strokeStyle = '#ff003c';
+                ctx.lineWidth = 3;
+                ctx.shadowColor = '#ff0000';
+                ctx.shadowBlur = 20;
+                ctx.stroke();
+
+                flashBg.style.opacity = '0.6';
+                setTimeout(() => {
+                    flashBg.style.opacity = '0';
+                }, 80);
+            }
+
+            requestAnimationFrame(createLightning);
+        }
+    </script>
+
+</body>
+</html>
+
